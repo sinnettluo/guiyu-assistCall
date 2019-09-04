@@ -1,0 +1,342 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.guiji.callcenter.dao.MyCallOutPlanMapper">
+
+
+    <sql id="Select_Where_SQL">
+        <where>
+            <if test="startDate != null">
+                and create_time > #{startDate}
+            </if>
+            <if test="endDate != null">
+                and create_time &lt; #{endDate}
+            </if>
+            <if test="phoneNum != null">
+                and phone_num = #{phoneNum}
+            </if>
+            <if test="durationMin != null">
+                and duration > #{durationMin}
+            </if>
+            <if test="durationMax != null">
+                and duration &lt;= #{durationMax}
+            </if>
+
+            <if test="billSecMin != null">
+                and bill_sec > #{billSecMin}
+            </if>
+            <if test="billSecMax != null">
+                and bill_sec &lt;= #{billSecMax}
+            </if>
+            <if test="accurateIntent != null">
+                and accurate_intent = #{accurateIntent}
+            </if>
+            <if test="accurateIntentList != null and accurateIntentList.size()>0">
+                and accurate_intent in
+                <foreach collection="accurateIntentList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="reason != null">
+                and reason = #{reason}
+            </if>
+            <if test="reasonList != null and reasonList.size()>0">
+                and reason in
+                <foreach collection="reasonList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="callId != null">
+                and call_id = #{callId}
+            </if>
+            <if test="tempId != null">
+                and temp_id = #{tempId}
+            </if>
+            <if test="isRead != null">
+                and isread = #{isRead}
+            </if>
+            <if test="customerId != null">
+                and customer_id = #{customerId}
+            </if>
+            <if test="queryUser != null">
+                and customer_id = #{queryUser}
+            </if>
+            <if test="intervened != null">
+                and intervened = #{intervened}
+            </if>
+            <if test="batchId != null">
+                and batch_id = #{batchId}
+            </if>
+            <if test="lineId != null">
+                and line_id = #{lineId}
+            </if>
+            <if test="answerUser != null">
+                and answer_user = #{answerUser}
+            </if>
+            <if test="enterprise != null">
+                and enterprise = #{enterprise}
+            </if>
+            <if test="orgId != null">
+                and org_id = #{orgId}
+            </if>
+            <if test="orgIdList != null and orgIdList.size()>0">
+                and org_id in
+                <foreach collection="orgIdList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="callIdList != null and callIdList.size()>0">
+                and call_id in
+                <foreach collection="callIdList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="notInList != null and notInList.size()>0">
+                and call_id not in
+                <foreach collection="notInList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="isdel != null">
+                and isdel = #{isdel}
+            </if>
+            <if test="callStateMin != null">
+                and call_state >= #{callStateMin}
+            </if>
+            <if test="minCallId != null">
+                and call_id > #{minCallId}
+            </if>
+            <if test="time != null">
+                and call_start_time >= DATE_SUB(CURDATE(),INTERVAL #{time} DAY)
+            </if>
+        </where>
+    </sql>
+
+    <select id="selectCallOutPlanList" resultType="com.guiji.callcenter.dao.entity.CallOutPlan">
+        select
+        call_id as callId,
+        <choose>
+            <when test="isDesensitization != null">
+                IF(1=#{isDesensitization},phone_num,REPLACE(phone_num, SUBSTR(phone_num,4,4), '****')) AS phoneNum ,
+            </when>
+            <otherwise>
+                phone_num as phoneNum,
+            </otherwise>
+        </choose>
+        customer_id as customerId, temp_id as tempId, line_id as lineId,enterprise,answer_user as answerUser,
+        call_start_time as callStartTime, hangup_time as hangupTime, answer_time as answerTime, duration,
+        bill_sec as billSec, accurate_intent as accurateIntent, reason, hangup_code as hangupCode , remarks,
+        freason, talk_num as talkNum, is_cancel as isCancel, is_answer as isAnswer, intervened ,org_id as orgId , isread,params
+        from call_out_plan
+        <include refid="Select_Where_SQL" />
+        order by create_time desc
+        <if test="limitStart != null">
+           limit  #{limitStart},#{limitEnd}
+        </if>
+    </select>
+
+
+    <select id="countCallOutPlan" resultType="java.lang.Integer">
+        select count(*)
+        from call_out_plan
+        <include refid="Select_Where_SQL" />
+    </select>
+
+    <update id="batchDeleteCallRecord">
+        update call_out_plan
+        set isdel = 1
+        <include refid="Select_Where_SQL" />
+    </update>
+
+    <select id="selectCallIdList" resultType="java.math.BigInteger">
+        select
+        call_id as callId
+        from call_out_plan
+        <include refid="Select_Where_SQL" />
+        order by create_time desc
+        <if test="limitStart != null">
+            limit  #{limitStart},#{limitEnd}
+        </if>
+    </select>
+
+
+    <select id="selectCallPlanRecord4Encrypt" resultType="java.util.Map">
+        select
+        CAST(a.call_id AS CHAR) as id, IF(1=#{isDesensitization},a.phone_num,REPLACE(a.phone_num,
+        SUBSTR(a.phone_num,4,4), '****')) AS phone ,
+        a.duration as calltime, a.accurate_intent as label, b.record_url as voicefile ,
+        a.isread as isbrowse,a.talk_num, a.org_id as orgId
+        from call_out_plan a
+        left join call_out_record b on a.call_id = b.call_id
+        <where>
+            <if test="startDate != null">
+                and a.create_time > #{startDate}
+            </if>
+            <if test="endDate != null">
+                and a.create_time &lt; #{endDate}
+            </if>
+            <if test="phoneNum != null">
+                and a.phone_num = #{phoneNum}
+            </if>
+            <if test="durationMin != null">
+                and a.duration > #{durationMin}
+            </if>
+            <if test="durationMax != null">
+                and a.duration &lt;= #{durationMax}
+            </if>
+
+            <if test="billSecMin != null">
+                and a.bill_sec > #{billSecMin}
+            </if>
+            <if test="billSecMax != null">
+                and a.bill_sec &lt;= #{billSecMax}
+            </if>
+            <if test="accurateIntent != null">
+                and a.accurate_intent = #{accurateIntent}
+            </if>
+            <if test="accurateIntentList != null and accurateIntentList.size()>0">
+                and a.accurate_intent in
+                <foreach collection="accurateIntentList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="reason != null">
+                and a.reason = #{reason}
+            </if>
+            <if test="reasonList != null and reasonList.size()>0">
+                and a.reason in
+                <foreach collection="reasonList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="tempId != null">
+                and a.temp_id = #{tempId}
+            </if>
+            <if test="isRead != null">
+                and a.isread = #{isRead}
+            </if>
+            <if test="customerId != null">
+                and a.customer_id = #{customerId}
+            </if>
+            <if test="queryUser != null">
+                and a.customer_id = #{queryUser}
+            </if>
+            <if test="intervened != null">
+                and a.intervened = #{intervened}
+            </if>
+            <if test="batchId != null">
+                and a.batch_id = #{batchId}
+            </if>
+            <if test="orgId != null">
+                and a.org_id = #{orgId}
+            </if>
+            <if test="orgIdList != null and orgIdList.size()>0">
+                and a.org_id in
+                <foreach collection="orgIdList" index="index" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="isdel != null">
+                and a.isdel = #{isdel}
+            </if>
+            <if test="callStateMin != null">
+                and a.call_state >= #{callStateMin}
+            </if>
+            <if test="minCallId != null">
+                and a.call_id > #{minCallId}
+            </if>
+            <if test="time != null">
+                and a.create_time >= DATE_SUB(CURDATE(),INTERVAL #{time} DAY)
+            </if>
+        </where>
+        order by a.create_time desc
+        <if test="limitStart != null">
+            limit  #{limitStart},#{limitEnd}
+        </if>
+    </select>
+
+    <update id="createCallOutPlan">
+        CREATE TABLE call_out_plan_${orgId}
+        (
+        `call_id` bigint(20) NOT NULL COMMENT '主键',
+        `plan_uuid` varchar(32) DEFAULT NULL COMMENT '计划uuid',
+        `phone_num` varchar(20) DEFAULT NULL COMMENT '电话号码',
+        `customer_id` int(8) DEFAULT NULL COMMENT '客户id',
+        `temp_id` varchar(30) NOT NULL DEFAULT '' COMMENT '模板id',
+        `line_id` int(11) NOT NULL COMMENT '线路id',
+        `serverId` varchar(30) DEFAULT NULL COMMENT '外呼服务id',
+        `agent_id` varchar(30) DEFAULT NULL COMMENT '坐席id',
+        `agent_answer_time` datetime DEFAULT NULL COMMENT '坐席说话时间',
+        `agent_channel_uuid` varchar(40) DEFAULT NULL COMMENT '坐席通道id',
+        `agent_group_id` varchar(30) DEFAULT NULL COMMENT '坐席组id',
+        `agent_start_time` datetime DEFAULT NULL COMMENT '坐席开始时间',
+        `create_time` datetime DEFAULT NULL COMMENT '创建时间',
+        `call_start_time` datetime DEFAULT NULL COMMENT '拨打时间',
+        `hangup_time` datetime DEFAULT NULL COMMENT '挂断时间',
+        `answer_time` datetime DEFAULT NULL COMMENT '接听时间',
+        `duration` int(11) DEFAULT '0' COMMENT '拨打时长',
+        `bill_sec` int(11) DEFAULT '0' COMMENT '接听时长',
+        `call_direction` int(2) DEFAULT NULL COMMENT '呼叫方向',
+        `call_state` int(2) DEFAULT NULL COMMENT '电话状态',
+        `hangup_direction` int(2) DEFAULT NULL COMMENT '挂断方',
+        `accurate_intent` varchar(20) DEFAULT NULL COMMENT '意向标签',
+        `reason` varchar(600) DEFAULT NULL COMMENT '意向备注',
+        `hangup_code` varchar(10) DEFAULT NULL COMMENT '挂断码',
+        `remarks` varchar(255) DEFAULT NULL COMMENT '备注信息',
+        `has_tts` tinyint(1) DEFAULT NULL COMMENT '是否是tts',
+        `ai_id` varchar(50) DEFAULT NULL COMMENT 'F类备注',
+        `freason` int(2) DEFAULT NULL COMMENT '1:占线，2:无人接听,3:主叫停机,4:被叫停机,5:空号,6:关机,7:呼叫限制,8:用户拒接,9:无效号码,10:拒接',
+        `isdel` int(2) NOT NULL DEFAULT '0' COMMENT '是否删除',
+        `isread` int(2) NOT NULL DEFAULT '0' COMMENT '是否已读',
+        `org_code` varchar(30) DEFAULT NULL COMMENT '组织机构码',
+        `org_id` int(11) DEFAULT NULL,
+        `batch_id` int(11) DEFAULT NULL COMMENT '批次id',
+        `talk_num` int(4) DEFAULT '0' COMMENT '对话轮数',
+        `is_cancel` int(1) DEFAULT '0' COMMENT '是否超时',
+        `is_answer` int(1) DEFAULT '0' COMMENT '是否接听',
+        `intervened` tinyint(1) DEFAULT '0' COMMENT '是否已介入',
+        `params` varchar(512) DEFAULT NULL COMMENT '变量参数',
+        `enterprise` VARCHAR(32) DEFAULT NULL COMMENT '用户所属企业单位',
+        `answer_user` VARCHAR(32) DEFAULT NULL COMMENT '用户名称',
+        `import_time` DATETIME DEFAULT NULL COMMENT '导入时间',
+        `last_modify_time` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (`call_id`),
+        UNIQUE KEY uk_call_out_plan_${orgId}_plan_uuid (`plan_uuid`),
+        KEY idx_call_out_plan_${orgId}_phone_num (`phone_num`),
+        KEY idx_call_out_plan_${orgId}_customer_id (`customer_id`),
+        KEY idx_call_out_plan_${orgId}_agent_id (`agent_id`),
+        KEY idx_call_out_plan_${orgId}_agent_answer_time (`agent_answer_time`),
+        KEY idx_call_out_plan_${orgId}_create_time (`create_time`),
+        KEY idx_call_out_plan_${orgId}_call_start_time (`call_start_time`),
+        KEY idx_call_out_plan_${orgId}_call_state (`call_state`),
+        KEY idx_call_out_plan_${orgId}_accurate_intent (`accurate_intent`),
+        KEY idx_call_out_plan_${orgId}_org_id (`org_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    </update>
+
+    <update id="createCallOutDetail">
+        CREATE TABLE call_out_detail_${orgId}
+        (
+        `call_detail_id` bigint(20) NOT NULL COMMENT '明细表id',
+        `call_id` bigint(20) DEFAULT NULL COMMENT '通话记录id',
+        `accurate_intent` varchar(10) DEFAULT NULL COMMENT '意向标签',
+        `agent_answer_text` varchar(255) DEFAULT NULL COMMENT '坐席说话内容',
+        `agent_answer_time` datetime DEFAULT NULL COMMENT '坐席说话时间',
+        `ai_duration` int(11) DEFAULT NULL COMMENT '机器人说话时长',
+        `asr_duration` int(11) DEFAULT NULL COMMENT '客户说话时长',
+        `bot_answer_text` varchar(255) DEFAULT NULL COMMENT '机器人说话内容',
+        `bot_answer_time` datetime DEFAULT NULL COMMENT '机器人说话时间',
+        `call_detail_type` int(2) NOT NULL COMMENT '明细类别',
+        `customer_say_text` varchar(255) DEFAULT NULL COMMENT '客户说话内容',
+        `customer_say_time` datetime DEFAULT NULL COMMENT '客户说话时间',
+        `reason` varchar(600) DEFAULT NULL COMMENT '意向备注',
+        `total_duration` int(11) DEFAULT NULL COMMENT '总时长',
+        `isupdate` int(1) DEFAULT '0' COMMENT '是否修改过',
+        `word_segment_result` varchar(255) DEFAULT NULL COMMENT '分词结果',
+        `keywords` varchar(255) DEFAULT NULL COMMENT '关键字',
+        `org_id` int(11) DEFAULT NULL,
+        PRIMARY KEY (`call_detail_id`),
+        KEY idx_call_out_detail_${orgId}_call_id (`call_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+    </update>
+
+</mapper>

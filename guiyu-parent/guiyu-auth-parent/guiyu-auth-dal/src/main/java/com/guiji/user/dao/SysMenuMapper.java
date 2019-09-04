@@ -1,0 +1,48 @@
+package com.guiji.user.dao;
+
+import com.guiji.user.dao.entity.SysMenu;
+import com.guiji.user.dao.entity.SysMenuExample;
+import java.util.List;
+import java.util.Map;
+
+import com.guiji.user.vo.MenuParamVo;
+import org.apache.ibatis.annotations.Param;
+
+public interface SysMenuMapper {
+    int countByExample(SysMenuExample example);
+
+    int deleteByExample(SysMenuExample example);
+
+    int deleteByPrimaryKey(Integer id);
+
+    int insert(SysMenu record);
+
+    int insertSelective(SysMenu record);
+
+    List<SysMenu> selectByExample(SysMenuExample example);
+
+    SysMenu selectByPrimaryKey(Integer id);
+
+    int updateByExampleSelective(@Param("record") SysMenu record, @Param("example") SysMenuExample example);
+
+    int updateByExample(@Param("record") SysMenu record, @Param("example") SysMenuExample example);
+
+    int updateByPrimaryKeySelective(SysMenu record);
+
+    int updateByPrimaryKey(SysMenu record);
+
+    //
+    List<SysMenu> getMenuByUserId(Long userId);
+
+    List<Map<String,String>> getAllPermissions();
+
+    List<SysMenu> getAllMenus();
+
+    List<Long> getSelectedMenuId(Long roleId);
+
+    String getPermissionsByUrl(String url);
+
+    public List<String> getPermissions();
+    
+    List<SysMenu> getUserMenus(@Param("roleId")Integer roleId,@Param("menuType")Integer menuType);
+}

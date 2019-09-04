@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.guiji.botsentence.dao.ext.BotSentenceDomainExtMapper" >
+  
+  <insert id="batchInsert" parameterType="java.util.List" >
+    insert into bot_sentence_domain (domain_id, domain_name, template_id, 
+      process_id, 
+      com_domain, category, ignore_but_domains, 
+      is_interrupt, is_main_flow, crt_time, 
+      crt_user, lst_update_time, lst_update_user, type, parent, position_x, position_y,
+      ignore_user_sentence, ignore_but_negative, match_order, not_match_less4_to, 
+      not_match_to, no_words_to, is_special_limit_free
+      )
+    VALUES
+    <foreach collection="list" item="item" index="index" separator="," >
+        (
+        (SELECT genTabId('bot_sentence_domain') AS domainId),
+        #{item.domainName},
+        #{item.templateId},
+        #{item.processId},
+        #{item.comDomain},
+        #{item.category},
+        #{item.ignoreButDomains},
+        #{item.isInterrupt},
+        #{item.isMainFlow},
+        #{item.crtTime},
+        #{item.crtUser},
+        #{item.lstUpdateTime},
+        #{item.lstUpdateUser},
+        #{item.type},
+        #{item.parent},
+        #{item.positionX},
+        #{item.positionY},
+        #{item.ignoreUserSentence},
+        #{item.ignoreButNegative},
+        #{item.matchOrder},
+        #{item.notMatchLess4To},
+        #{item.notMatchTo},
+        #{item.noWordsTo},
+        #{item.isSpecialLimitFree}
+        )
+    </foreach>
+    
+</insert>
+
+	<update id="batchUpdateComDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set com_domain = null, is_main_flow = null
+	    where process_id= #{processId}
+  </update>
+  
+  <update id="batchUpdateIgnoreButNegative" parameterType="string" >
+	    update bot_sentence_domain
+	   	set ignore_but_negative = null where process_id= #{processId}
+  </update>
+  
+  <update id="batchUpdateIsSpecialLimitFree" parameterType="string" >
+	    update bot_sentence_domain
+	   	set is_special_limit_free = null where process_id= #{processId}
+  </update>
+  
+  <update id="batchUpdateIgnoreButSentence" parameterType="string" >
+	    update bot_sentence_domain
+	   	set ignore_user_sentence = null where process_id= #{processId}
+  </update>
+  
+  <update id="updateIgnoreButSentenceByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set ignore_user_sentence = null where process_id= #{processId} and domain_name=#{domainName}
+  </update>
+  
+  <update id="updateIgnoreButNegativeByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set ignore_but_negative = null where process_id= #{processId} and domain_name=#{domainName}
+  </update>
+  
+  <!-- 删除节点 -->
+  
+  <update id="deleteNotMatchLess4ToByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set not_match_less4_to = null where process_id= #{processId} and not_match_less4_to=#{domainName}
+  </update>
+  
+  <update id="deleteNotMatchToByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set not_match_to = null where process_id= #{processId} and not_match_to=#{domainName}
+  </update>
+  
+  <update id="deleteNotWordsToByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set no_words_to = null where process_id= #{processId} and no_words_to=#{domainName}
+  </update>
+  
+  <!-- 修改节点名称 -->
+  
+  <update id="updateNotMatchLess4ToByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set not_match_less4_to = #{newDomainName} where process_id= #{processId} and not_match_less4_to=#{domainName}
+  </update>
+  
+  <update id="updateNotMatchToByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set not_match_to = #{newDomainName} where process_id= #{processId} and not_match_to=#{domainName}
+  </update>
+  
+  <update id="updateNotWordsToByDomain" parameterType="string" >
+	    update bot_sentence_domain
+	   	set no_words_to = #{newDomainName} where process_id= #{processId} and no_words_to=#{domainName}
+  </update>
+  
+</mapper>
